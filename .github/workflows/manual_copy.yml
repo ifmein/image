@@ -1,0 +1,41 @@
+name: Manual Copy Image
+
+run-name: ${{ github.actor }} run manual copy image
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "源镜像 (如 redis:7.2.5 或 quay.io/coreos/etcd:v3.5.17)"
+        required: true
+        type: string
+      dest:
+        description: "目标镜像 (空则默认为 REGISTRY/REGISTRY_NAMESPACE/镜像名)"
+        required: false
+        type: string
+      multi_arch:
+        description: "全部架构（不勾选则只复制运行 runner 的架构，ubuntu-24.04 即 linux/amd64）"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  copy-image:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Use Skopeo Copy
+        env:
+          REGISTRY: ${{ secrets.REGISTRY }}
+          REGISTRY_NAMESPACE: ${{ secrets.REGISTRY_NAMESPACE }}
+          SRC: ${{ inputs.source }}
+          DEST: ${{ inputs.dest }}
+          MULTI_ARCH: ${{ inputs.multi_arch }}
+        run: |
+          skopeo --version
+          skopeo login --username=${{ secrets.REGISTRY_USERNAME }} --password=${{ secrets.REGISTRY_PASSWORD }} "$REGISTRY"
+          . ./scripts/copy.sh
+          mirror "$SRC" "$DEST" "$MULTI_ARCH"

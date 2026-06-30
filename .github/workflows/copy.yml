@@ -1,0 +1,27 @@
+name: Copy Image
+
+run-name: ${{ github.actor }} run copy image
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'images.yaml'
+
+jobs:
+  copy-image:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Use Skopeo Copy
+        env:
+          REGISTRY: ${{ secrets.REGISTRY }}
+          REGISTRY_NAMESPACE: ${{ secrets.REGISTRY_NAMESPACE }}
+        run: |
+          skopeo --version
+          yq --version
+          skopeo login --username=${{ secrets.REGISTRY_USERNAME }} --password=${{ secrets.REGISTRY_PASSWORD }} "$REGISTRY"
+          sh scripts/copy.sh batch
